@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ask the Handbook</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; }
+
+        #chat-button {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 60px;
+            height: 60px;
+            background-color: #DA2037;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            z-index: 9999;
+            transition: background-color 0.2s;
+        }
+        #chat-button:hover { background-color: #b81c2e; }
+        #chat-button svg { fill: white; width: 28px; height: 28px; }
+
+        #chat-window {
+            position: fixed;
+            bottom: 96px;
+            right: 24px;
+            width: 380px;
+            height: 560px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 9999;
+        }
+        #chat-window.open { display: flex; }
+
+        #chat-header {
+            background-color: #DA2037;
+            color: white;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        #chat-header h3 { font-size: 15px; font-weight: 600; }
+
+        #close-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 22px;
+            cursor: pointer;
+            line-height: 1;
+        }
+        #close-button:hover { opacity: 0.8; }
+
+        #chat-content {
+            flex: 1;
+            border: none;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Floating chat button -->
+    <div id="chat-button" onclick="toggleChat()" title="Ask the Handbook">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M20 2H4C2.9 2 2 2.9 2 4v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 10H6v-2h12v2zm0-3H6V7h12v2z"/>
+        </svg>
+    </div>
+
+    <!-- Chat window -->
+    <div id="chat-window">
+        <div id="chat-header">
+            <h3>📖 Ask the Handbook</h3>
+            <button id="close-button" onclick="toggleChat()" title="Close">×</button>
+        </div>
+        <iframe
+            id="chat-content"
+            src="https://copilotstudio.microsoft.com/environments/Default-61d6eb67-cbe5-42ee-8a13-73c46652bd71/bots/cr2ce_agent/webchat?__version__=2"
+            frameborder="0">
+        </iframe>
+    </div>
+
+    <script>
+        function toggleChat() {
+            const win = document.getElementById('chat-window');
+            const btn = document.getElementById('chat-button');
+            if (win.classList.contains('open')) {
+                win.classList.remove('open');
+                btn.style.display = 'flex';
+            } else {
+                win.classList.add('open');
+                btn.style.display = 'none';
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            const win = document.getElementById('chat-window');
+            const btn = document.getElementById('chat-button');
+            if (win.classList.contains('open') &&
+                !win.contains(e.target) &&
+                !btn.contains(e.target)) {
+                win.classList.remove('open');
+                btn.style.display = 'flex';
+            }
+        });
+    </script>
+</body>
+</html>
