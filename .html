@@ -3,27 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ask the Handbook - PRTS Employee Handbook Assistant</title>
+    <title>Ask the Handbook</title>
     <script src="https://cdn.botframework.com/botframework-webchat/latest/webchat.js"></script>
     <style>
-        body {
+        * { box-sizing: border-box; }
+
+        html, body {
             margin: 0;
-            padding: 20px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 0;
+            overflow: hidden;
+            height: 100%;
             background: #F3F3F4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            -webkit-overflow-scrolling: touch;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
+        /* Desktop: centered card */
         #webchat-container {
+            position: relative;
             width: 420px;
             height: 620px;
+            margin: 40px auto;
             border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 10px 40px rgba(28, 28, 28, 0.12);
+            box-shadow: 0 10px 40px rgba(28,28,28,0.12);
             border: 1px solid #e0e0e0;
             background: white;
             resize: both;
@@ -31,105 +33,234 @@
             min-height: 400px;
             display: flex;
             flex-direction: column;
-            position: relative;
         }
 
+        /* Mobile: fixed to visible viewport — JS controls top + height */
         @media (max-width: 768px) {
-            body { padding: 0; }
             #webchat-container {
-                width: 100vw;
-                height: 100vh;
+                position: fixed;
+                left: 0;
+                width: 100%;
                 border-radius: 0;
                 border: none;
                 resize: none;
-                min-height: 100vh;
+                min-height: unset;
+                margin: 0;
             }
-            #header { position: sticky; top: 0; z-index: 100; }
         }
 
         #header {
-            background-color: #DA2037;
-            color: white;
-            padding: 16px 20px;
+            background: white;
+            padding: 16px 24px 12px 24px;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 12px;
+            border-bottom: 1px solid #f0f0f0;
             flex-shrink: 0;
         }
+        #header-content { flex: 1; }
+        #header h1 {
+            margin: 0 0 2px 0;
+            color: #DA2037;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        #header p { margin: 0; color: #6b6b6b; font-size: 12px; }
 
-        #header-icon {
+        #fullscreen-btn {
+            background: #f5f5f5;
+            border: none;
+            color: #6b6b6b;
             width: 36px;
             height: 36px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 50%;
+            border-radius: 10px;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            transition: all 0.2s;
             flex-shrink: 0;
+            margin-left: 12px;
         }
-
-        #header-text h2 {
-            margin: 0;
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        #header-text p {
-            margin: 2px 0 0;
-            font-size: 12px;
-            opacity: 0.85;
-        }
+        #fullscreen-btn:hover { background: #e8e8e8; color: #DA2037; }
 
         #webchat {
             flex: 1;
+            width: 100%;
+            min-height: 0;
             overflow: hidden;
+        }
+
+        /* 16px prevents iOS auto-zoom */
+        #webchat input[type="text"],
+        #webchat textarea {
+            font-size: 16px !important;
+            touch-action: manipulation;
+        }
+
+        /* Floating keyboard button — mobile only */
+        #keyboard-btn {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            #keyboard-btn {
+                display: flex;
+                position: absolute;
+                bottom: 58px;
+                right: 12px;
+                width: 40px;
+                height: 40px;
+                background: #DA2037;
+                border: none;
+                border-radius: 50%;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+                cursor: pointer;
+                z-index: 100;
+                touch-action: manipulation;
+            }
+        }
+
+        #webchat-container.fullscreen {
+            position: fixed !important;
+            left: 0;
+            width: 100vw !important;
+            border-radius: 0;
+            z-index: 9999;
         }
     </style>
 </head>
 <body>
     <div id="webchat-container">
         <div id="header">
-            <div id="header-icon">📖</div>
-            <div id="header-text">
-                <h2>Ask the Handbook</h2>
+            <div id="header-content">
+                <h1>Ask the Handbook</h1>
                 <p>AI Assistant for Staff &amp; Faculty</p>
             </div>
+            <button id="fullscreen-btn" onclick="toggleFullscreen()" title="Toggle fullscreen">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 5V1H5M11 1H15V5M15 11V15H11M5 15H1V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
         </div>
         <div id="webchat" role="main"></div>
+
+        <!-- Keyboard button: tap to open keyboard -->
+        <button id="keyboard-btn" title="Open keyboard" aria-label="Open keyboard">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="6" width="20" height="13" rx="2" stroke="white" stroke-width="1.8"/>
+                <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M10 14h4M18 14h.01" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+        </button>
     </div>
 
     <script>
-        (async function() {
-            const styleOptions = {
-                accent: '#DA2037',
-                botAvatarInitials: 'HB',
-                userAvatarInitials: 'You',
-                backgroundColor: '#F3F3F4',
-                bubbleBackground: '#ffffff',
-                bubbleBorderRadius: 12,
-                bubbleFromUserBackground: '#DA2037',
-                bubbleFromUserTextColor: '#ffffff',
-                bubbleFromUserBorderRadius: 12,
-                sendBoxBackground: '#ffffff',
-                sendBoxBorderTop: '1px solid #e0e0e0',
-            };
+        const tokenEndpoint = 'https://default61d6eb67cbe542ee8a1373c46652bd.71.environment.api.powerplatform.com/powervirtualagents/botsbyschema/cr2ce_agent/directline/token?api-version=2022-03-01-preview';
 
-            const res = await fetch(
-                'https://default61d6eb67cbe542ee8a1373c46652bd71.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr2ce_agent/conversations?api-version=2022-03-01-preview',
-                { method: 'POST' }
-            );
-            const { token } = await res.json();
+        const styleOptions = {
+            accent: '#DA2037',
+            backgroundColor: 'white',
+            bubbleBackground: '#F3F3F4',
+            bubbleFromUserBackground: '#D3D8DC',
+            bubbleFromUserTextColor: '#1C1C1C',
+            bubbleBorderRadius: 16,
+            bubbleFromUserBorderRadius: 16,
+            bubbleTextColor: '#1C1C1C',
+            sendBoxBackground: 'white',
+            sendBoxTextColor: '#1C1C1C',
+            sendBoxBorderTop: 'solid 1px #f0f0f0',
+            sendBoxPlaceholderColor: '#999999',
+            sendBoxButtonColor: '#DA2037',
+            sendBoxButtonColorOnHover: '#b81a2d',
+            sendBoxHeight: 50,
+            sendBoxButtonColorOnFocus: '#b81a2d',
+            suggestedActionBackground: 'white',
+            suggestedActionBorderColor: '#DA2037',
+            suggestedActionBorderRadius: 20,
+            suggestedActionTextColor: '#DA2037',
+            suggestedActionBorderWidth: 1.5,
+            timestampColor: '#999999',
+            botAvatarBackgroundColor: '#DA2037',
+            botAvatarInitials: 'HB',
+            userAvatarBackgroundColor: '#1C1C1C',
+            userAvatarInitials: '',
+            avatarSize: 32,
+            avatarBorderRadius: '50%',
+            hideUploadButton: false,
+            groupTimestamp: 300000
+        };
 
-            window.WebChat.renderWebChat(
-                {
-                    directLine: window.WebChat.createDirectLine({ token }),
-                    styleOptions,
-                    locale: 'en-US',
-                },
-                document.getElementById('webchat')
-            );
-        })();
+        function isMobile() { return window.innerWidth <= 768; }
+
+        function pinToViewport() {
+            if (!isMobile()) return;
+            const vv = window.visualViewport;
+            const top = vv ? vv.offsetTop : 0;
+            const h   = vv ? vv.height    : window.innerHeight;
+            const c   = document.getElementById('webchat-container');
+            c.style.top    = top + 'px';
+            c.style.height = h   + 'px';
+        }
+
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', pinToViewport);
+            window.visualViewport.addEventListener('scroll', pinToViewport);
+        }
+        window.addEventListener('resize', pinToViewport);
+        pinToViewport();
+
+        let sendInput = null;
+
+        function attachBehavior() {
+            const webchatEl = document.getElementById('webchat');
+            const observer  = new MutationObserver(() => {
+                const input = webchatEl.querySelector('input[type="text"], textarea');
+                if (!input) return;
+                observer.disconnect();
+                sendInput = input;
+
+                function blurAfterSend() {
+                    setTimeout(() => input.blur(), 80);
+                }
+                input.addEventListener('keydown', e => {
+                    if (e.key === 'Enter' && !e.shiftKey) blurAfterSend();
+                });
+                webchatEl.addEventListener('click', e => {
+                    if (e.target.closest('button[type="submit"], button[aria-label="Send"]')) blurAfterSend();
+                });
+                webchatEl.addEventListener('touchend', e => {
+                    if (e.target.closest('button[type="submit"], button[aria-label="Send"]')) blurAfterSend();
+                }, { passive: true });
+            });
+            observer.observe(webchatEl, { childList: true, subtree: true });
+        }
+
+        document.getElementById('keyboard-btn').addEventListener('click', () => {
+            if (sendInput) sendInput.focus();
+        });
+
+        async function initWebChat() {
+            try {
+                const res = await fetch(tokenEndpoint);
+                const { token } = await res.json();
+                const directLine = window.WebChat.createDirectLine({ token });
+                window.WebChat.renderWebChat({ directLine, styleOptions }, document.getElementById('webchat'));
+                attachBehavior();
+            } catch (err) {
+                console.error('Error initializing webchat:', err);
+                document.getElementById('webchat').innerHTML =
+                    '<p style="padding:20px;text-align:center;color:#DA2037;">Unable to load chat. Please refresh the page.</p>';
+            }
+        }
+
+        initWebChat();
+
+        function toggleFullscreen() {
+            document.getElementById('webchat-container').classList.toggle('fullscreen');
+            pinToViewport();
+        }
     </script>
 </body>
 </html>
